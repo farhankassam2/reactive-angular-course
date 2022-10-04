@@ -4,7 +4,10 @@ import {interval, noop, Observable, of, throwError, timer} from 'rxjs';
 import {catchError, delay, delayWhen, filter, finalize, map, retryWhen, shareReplay, tap} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {CourseDialogComponent} from '../course-dialog/course-dialog.component';
+import { CoursesService } from '../services/courses.service';
+import { LoadingService } from '../loading/loading.service';
+import { MessagesService } from '../messages/messages.service';
+import { CoursesStore } from '../services/courses.store';
 
 
 @Component({
@@ -14,43 +17,62 @@ import {CourseDialogComponent} from '../course-dialog/course-dialog.component';
 })
 export class HomeComponent implements OnInit {
 
-  beginnerCourses: Course[];
+  beginnerCourses$: Observable<Course[]>; // data variables are Observables subscribed to by async pipe in the template
 
-  advancedCourses: Course[];
+  advancedCourses$: Observable<Course[]>;
 
 
-  constructor(private http: HttpClient, private dialog: MatDialog) {
+  constructor(
+              private loadingService: LoadingService,
+              private messagesService: MessagesService,
+              private coursesStore: CoursesStore) {}
+
+  ngOnInit() { // to be called by Angular framework only and not by application code
+      this.reloadCourses();
+    
+    // this.http.get('/api/courses')
+    //   .subscribe(
+    //     res => {
+
+    //       const courses: Course[] = res["payload"].sort(sortCoursesBySeqNo);
+
+    //       this.beginnerCourses = courses.filter(course => course.category == "BEGINNER");
+
+    //       this.advancedCourses = courses.filter(course => course.category == "ADVANCED");
+
+    //     });
 
   }
 
-  ngOnInit() {
+  reloadCourses() {
+    // Below commented out when adding state management in CoursesStore:
+    // // this.loadingService.loadingOn();
+    //   const courses$ = this.coursesService.loadAllCourses()
+    //   .pipe(
+    //     map(courses => courses.sort(sortCoursesBySeqNo)),
+    //     catchError((err) => {
+    //       const message = "Could not load courses";
+    //       this.messagesService.showErrors(message);
+    //       console.log(message, err);
+    //       return throwError(err); // terminates observable chain
+    //     })
+    //     // finalize(() => this.loadingService.loadingOff())
+    //   );
 
-    this.http.get('/api/courses')
-      .subscribe(
-        res => {
+    //   // Less decoupled and less verbose below: line 54
+    //   const loadCourses$ = this.loadingService.showLoaderUntilCompleted(courses$);
 
-          const courses: Course[] = res["payload"].sort(sortCoursesBySeqNo);
+    // this.beginnerCourses$ = loadCourses$.pipe (
+    //   map(courses => courses.filter(course => course.category === "BEGINNER"))
+    // );
 
-          this.beginnerCourses = courses.filter(course => course.category == "BEGINNER");
+    // this.advancedCourses$ = loadCourses$.pipe (
+    //   map(courses => courses.filter(course => course.category === "ADVANCED" || course.category === "INTERMEDIATE"))
+    // );
 
-          this.advancedCourses = courses.filter(course => course.category == "ADVANCED");
+    this.beginnerCourses$ = this.coursesStore.filterByCategory("BEGINNER");
 
-        });
-
-  }
-
-  editCourse(course: Course) {
-
-    const dialogConfig = new MatDialogConfig();
-
-    dialogConfig.disableClose = true;
-    dialogConfig.autoFocus = true;
-    dialogConfig.width = "400px";
-
-    dialogConfig.data = course;
-
-    const dialogRef = this.dialog.open(CourseDialogComponent, dialogConfig);
-
+    this.advancedCourses$ = this.coursesStore.filterByCategory("ADVANCED");
   }
 
 }
