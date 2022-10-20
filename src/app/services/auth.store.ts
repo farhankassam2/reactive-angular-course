@@ -22,7 +22,7 @@ export class AuthStore {
         this.isLoggedOut$ = this.isLoggedIn$.pipe(map(isLoggedIn => !isLoggedIn));
         
         const user = localStorage.getItem(AUTH_DATA);
-        if (user) {
+        if (user) { 
             this.subject.next(JSON.parse(user));
         }
     }
