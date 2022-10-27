@@ -20,6 +20,26 @@ export class CoursesService {
             );
     }
 
+    loadCourseById(courseId: number): Observable<Course> {
+        return this.http.get<Course>(`/api/courses/${courseId}`)
+            .pipe(
+                shareReplay() // prevents triggering multiple http calls if it gets subscribed to multiple times
+            );
+    }
+
+    loadAllCourseLessons(courseId: number): Observable<Lesson[]> {
+        return this.http.get<Lesson[]>('/api/lessons', {
+            params: {
+                pageSize: "10000",
+                courseId: courseId.toString()
+            }
+        }).
+            pipe(
+                map(res => res["payload"]),
+                shareReplay()
+            );
+    }
+
     saveCourse(courseId: string, changes: Partial<Course>): Observable<any> { // Partial: type safety and can define only some items in Course
         return this.http.put(`/api/courses/${courseId}`, changes)
             .pipe(
